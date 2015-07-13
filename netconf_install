@@ -1,0 +1,79 @@
+#!/bin/bash
+
+build ()
+{
+
+  # if TMPDIR is set leave it alone otherwise set
+  [ -z $TMPDIR ] && TMPDIR='/tmp/mkinitcpio-netconf'
+
+  # check if TMPDIR exsists if not make it
+  [ -d $TMPDIR ] || mkdir -p $TMPDIR
+
+  umask 0022
+
+  [ -d /etc/dropbear ] && mkdir -p /etc/dropbear
+
+  copy_openssh_keys || generate_keys
+  display_fingerprints
+
+  [ -e "${TMPDIR}/passwd" ] && ( grep -q -e '^root:' "${TMPDIR}/passwd" ) || make_etc_passwd
+
+  add_checked_modules "/drivers/net/"
+  add_binary "rm"
+  add_binary "dropbear"
+  add_binary "killall"
+
+  cat <<SCRIPTEOF > ${TMPDIR}/cryptsetup_shell
+#!/bin/sh
+if [ -c "/dev/mapper/control" ]; then
+  if eval /sbin/cryptsetup luksOpen \`cat /.cryptdev\` \`cat /.cryptname\` \`cat /.cryptargs\` ; then
+    echo > /.done
+    killall cryptsetup
+  fi
+else
+  echo "encryption bootup not succeeded. please wait!"
+fi
+SCRIPTEOF
+
+  chmod a+x ${TMPDIR}/cryptsetup_shell
+
+  add_file "${TMPDIR}/cryptsetup_shell" "/bin/cryptsetup_shell"
+
+  echo '/bin/cryptsetup_shell' > "${TMPDIR}"/shells
+  add_file "${TMPDIR}/shells" "/etc/shells"
+
+  cat /etc/dropbear/root_key > "${TMPDIR}"/authorized_keys
+
+  add_dir "/.ssh"
+  add_file "${TMPDIR}/authorized_keys" "/.ssh/authorized_keys"
+  add_file "${TMPDIR}/passwd" "/etc/passwd"
+  add_full_dir "/etc/dropbear"
+  add_file "/lib/libnss_files.so.2"
+  add_binary "ip" "/sbin/ip"
+  add_dir "/var/run"
+
+  touch "${TMPDIR}"/lastlog
+  add_dir "/var/log"
+  add_file "${TMPDIR}/lastlog" "/var/log/lastlog"
+  add_binary "/usr/lib/initcpio/ipconfig" "/bin/ipconfig"
+
+  # cleanup
+  rm "${TMPDIR}/cryptsetup_shell"
+  rm "${TMPDIR}/shells"
+  rm "${TMPDIR}/authorized_keys"
+  rm "${TMPDIR}/passwd"
+  rm "${TMPDIR}/lastlog"
+
+  add_runscript
+  
+}
+
+help ()
+{
+    cat<<HELPEOF
+This hook should always be used in combination with the "encrypthssh" hook. 
+Add this hook before the "encryptssh", though. Together they allow to enter 
+a password for a LUKS encrypted root device either via SSH or locally. 
+HELPEOF
+}
+
