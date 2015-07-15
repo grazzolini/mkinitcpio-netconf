@@ -1,0 +1,29 @@
+#!/bin/bash
+
+build ()
+{
+  # if TMPDIR is set leave it alone otherwise set
+  [ -z $TMPDIR ] && TMPDIR='/tmp/mkinitcpio-netconf'
+
+  # check if TMPDIR exsists if not make it
+  [ -d $TMPDIR ] || mkdir -p $TMPDIR
+
+  umask 0022
+
+  add_checked_modules "/drivers/net/"
+  add_binary "/usr/bin/ip" "/sbin/ip"
+  add_binary "/usr/lib/initcpio/ipconfig" "/sbin/ipconfig"
+
+  add_runscript
+  
+}
+
+help ()
+{
+    cat<<HELPEOF
+This hook will parse the ip= command line variable on the kernel and configure
+the interface specified. It's meant to be used in combination with other hooks
+that require early userspace networking, such as mkinitcpio-dropbear and
+mkinitcpio-ddns, among others.
+HELPEOF
+}
