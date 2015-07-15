@@ -23,6 +23,7 @@ help ()
     cat<<HELPEOF
 This hook will parse the ip= command line variable on the kernel and configure
 the interface specified. It's meant to be used in combination with other hooks
-that require early userspace networking.
+that require early userspace networking, such as mkinitcpio-dropbear and
+mkinitcpio-ddns, among others.
 HELPEOF
 }
