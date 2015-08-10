@@ -30,7 +30,7 @@ build ()
 		  add_file $network $initramfs_strip
 	      fi
 	  done
-      fi			 
+      fi
   #base enabled
   else
       add_checked_modules "/drivers/net/"
