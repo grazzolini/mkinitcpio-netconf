@@ -10,11 +10,35 @@ build ()
 
   umask 0022
 
-  add_checked_modules "/drivers/net/"
-  add_binary "/usr/bin/ip" "/sbin/ip"
-  add_binary "/usr/lib/initcpio/ipconfig" "/sbin/ipconfig"
+  #systemd enabled
+  declare -F add_systemd_unit > /dev/null 2>&1
+  if [ $? -eq 0 ]; then
+      add_systemd_unit "systemd-networkd.service"
+      add_systemd_unit "systemd-networkd.socket"
+      systemctl --root "$BUILDROOT" enable systemd-networkd.service
+      systemctl --root "$BUILDROOT" enable systemd-networkd.socket
+      add_dir "/etc/systemd/network"
+      ls /etc/systemd/network/*.initramfs > /dev/null 2>&1
+      if [ $? -ne 0 ]; then
+	  echo "Systemd is enabled, but there are no .initramfs files under /etc/systemd/network; exit"
+	  return 0
+      else
+	  for network in $(ls /etc/systemd/network/*.initramfs); do
+	      if [ -s $network ]; then
+		  initramfs_strip=$(echo $network | sed -e 's/\.initramfs//g')
+		  echo "Added $network to $initramfs_strip"
+		  add_file $network $initramfs_strip
+	      fi
+	  done
+      fi			 
+  #base enabled
+  else
+      add_checked_modules "/drivers/net/"
+      add_binary "/usr/bin/ip" "/sbin/ip"
+      add_binary "/usr/lib/initcpio/ipconfig" "/sbin/ipconfig"
 
-  add_runscript
+      add_runscript
+  fi
   
 }
 
@@ -23,7 +47,7 @@ help ()
     cat<<HELPEOF
 This hook will parse the ip= command line variable on the kernel and configure
 the interface specified. It's meant to be used in combination with other hooks
-that require early userspace networking, such as mkinitcpio-dropbear and
-mkinitcpio-ddns, among others.
+that require early userspace networking, such as mkinitcpio-dropbear,
+mkinitcpio-tinyssh and mkinitcpio-ddns, among others.
 HELPEOF
 }
