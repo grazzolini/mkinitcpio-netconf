@@ -12,7 +12,7 @@ run_hook ()
 
   if [ -n "${ip}" ]; then
     # setup network and save some values
-    ipconfig "ip=${ip}" | while read line; do
+    ipconfig -t 30 "ip=${ip}" | while read line; do
       if [ "${line#"IP-Config:"}" != "${line}" ]; then
         continue
       fi
