@@ -11,8 +11,13 @@ run_hook ()
   fi
 
   if [ -n "${ip}" ]; then
-    # setup network and save some values
-    ipconfig "ip=${ip}" | while read line; do
+      if [ -n "$netconf_timeout" ]; then
+	  ipconfig_cmd="ipconfig -t $netconf_timeout ip=${ip}"
+      else
+	  ipconfig_cmd="ipconfig ip=${ip}"
+      fi
+      # setup network and save some values
+      $ipconfig_cmd | while read line; do
       if [ "${line#"IP-Config:"}" != "${line}" ]; then
         continue
       fi
