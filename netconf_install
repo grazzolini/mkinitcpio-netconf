@@ -26,6 +26,7 @@ build ()
 	  for network in $(ls /etc/systemd/network/*.initramfs); do
 	      if [ -s $network ]; then
 		  initramfs_strip=$(echo $network | sed -e 's/\.initramfs//g')
+                  [ -L $network ] && network=$(readlink -nf $network)
 		  echo "Added $network to $initramfs_strip"
 		  add_file $network $initramfs_strip
 	      fi
