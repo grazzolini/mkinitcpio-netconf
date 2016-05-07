@@ -13,8 +13,11 @@ build ()
   #systemd enabled
   declare -F add_systemd_unit > /dev/null 2>&1
   if [ $? -eq 0 ]; then
+      add_file "/usr/share/mkinitcpio-netconf/cleanup-network.service" "/etc/systemd/system/cleanup-network.service"
+      add_binary "/usr/share/mkinitcpio-netconf/cleanup-network.sh" "/usr/bin/cleanup-network.sh"
       add_systemd_unit "systemd-networkd.service"
       add_systemd_unit "systemd-networkd.socket"
+      systemctl --root "$BUILDROOT" enable cleanup-network.service
       systemctl --root "$BUILDROOT" enable systemd-networkd.service
       systemctl --root "$BUILDROOT" enable systemd-networkd.socket
       add_dir "/etc/systemd/network"
