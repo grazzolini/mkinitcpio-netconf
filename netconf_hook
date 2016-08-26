@@ -1,68 +1,94 @@
 #!/usr/bin/ash
 
+configure_device ()
+{
+    local line i address netmask gateway dns0 dns1 rootserver rootpath defaultrootpath defaultserver
+
+    : > /ip_opts
+
+    if [ -n "${ip_dev}" ]; then
+        if [ -n "$netconf_timeout" ]; then
+            ipconfig_cmd="ipconfig -t $netconf_timeout ip=${ip_dev}"
+        else
+            ipconfig_cmd="ipconfig ip=${ip_dev}"
+        fi
+        # setup network and save some values
+        $ipconfig_cmd | while read line; do
+            if [ "${line#"IP-Config:"}" != "${line}" ]; then
+                continue
+            fi
+
+            line="$(echo ${line} | sed -e 's/ :/:/g;s/: /=/g')"
+
+            for i in ${line}; do
+                case "${i}" in
+                    address=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    netmask=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    gateway=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    dns0=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    dns1=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    rootserver=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                    rootpath=*)
+                        echo "${i}" >> /ip_opts
+                        ;;
+                esac
+            done
+        done
+
+        echo "device=$(echo ${ip_dev} | cut -d: -f6)" >> /ip_opts
+        echo "$(echo ${ip_dev} | cut -d: -f6)" >> /ip_devices
+
+        . /ip_opts
+        echo "IP-Config: ${device}: ${address}/${netmask}"
+        echo "IP-Config: ${device}: gw: ${gateway}    dns0: ${dns0}    dns1: ${dns1}"
+
+        return 0
+    fi
+}
+
 run_hook ()
 {
-  local line i address netmask gateway dns0 dns1 rootserver rootpath defaultrootpath defaultserver
 
-  : > /ip_opts
+
+  : > /ip_devices
 
   if [ -z "${ip}" -a -n "${nfsaddrs}" ]; then
     ip="${nfsaddrs}"
   fi
 
   if [ -n "${ip}" ]; then
-      if [ -n "$netconf_timeout" ]; then
-	  ipconfig_cmd="ipconfig -t $netconf_timeout ip=${ip}"
-      else
-	  ipconfig_cmd="ipconfig ip=${ip}"
-      fi
-      # setup network and save some values
-      $ipconfig_cmd | while read line; do
-      if [ "${line#"IP-Config:"}" != "${line}" ]; then
-        continue
-      fi
+      case ${ip} in
+          ip=*)
+              for ip_dev in $(echo ${ip} | sed -e 's/ip=/\n/g' | sed -e 's/:$//g' | sed '/^$/d'); do
+                  configure_device
+              done
+              ;;
+          *)
+              ip_dev="${ip}"
+              configure_device
+              ;;
+      esac
 
-      line="$(echo ${line} | sed -e 's/ :/:/g;s/: /=/g')"
-
-      for i in ${line}; do
-        case "${i}" in
-          address=*)
-            echo "${i}" >> /ip_opts
-          ;;
-          netmask=*)
-            echo "${i}" >> /ip_opts
-          ;;
-          gateway=*)
-            echo "${i}" >> /ip_opts
-          ;;
-          dns0=*)
-            echo "${i}" >> /ip_opts
-          ;;
-          dns1=*)
-            echo "${i}" >> /ip_opts
-          ;;
-          rootserver=*)
-            echo "${i}" >> /ip_opts
-          ;;
-          rootpath=*)
-            echo "${i}" >> /ip_opts
-          ;;
-        esac
-      done
-    done
-
-    echo "device=$(echo ${ip} | cut -d: -f6)" >> /ip_opts
   fi
 
-  . /ip_opts
-
-  echo "IP-Config: ${address}/${netmask}"
-  echo "IP-Config: gw: ${gateway}    dns0: ${dns0}    dns1: ${dns1}"
 }
 
 run_cleanuphook ()
 {
-    . /ip_opts
-    /sbin/ip addr flush dev "$device"
-    /sbin/ip link set down "$device"
+    for device in $(cat /ip_devices); do
+        /sbin/ip addr flush dev "$device"
+        /sbin/ip link set down "$device"
+    done
 }
