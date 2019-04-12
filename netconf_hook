@@ -83,6 +83,8 @@ run_hook ()
 
   fi
 
+  # set link up for lo
+  /sbin/ip link set up lo
 }
 
 run_cleanuphook ()
@@ -91,4 +93,7 @@ run_cleanuphook ()
         /sbin/ip addr flush dev "$device"
         /sbin/ip link set down "$device"
     done
+
+    # set ip link down for lo
+    /sbin/ip link set down lo
 }
