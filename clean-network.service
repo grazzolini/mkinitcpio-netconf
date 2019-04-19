@@ -1,0 +1,11 @@
+[Unit]
+Description=Cleanup network setup
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh /usr/bin/clean-network.sh start
+ExecStop=/bin/sh /usr/bin/clean-network.sh stop
+
+[Install]
+WantedBy=sysinit.target
