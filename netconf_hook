@@ -7,6 +7,11 @@ configure_device ()
     : > /ip_opts
 
     if [ -n "${ip_dev}" ]; then
+    
+        # validate input
+        # trim 7th colon and after because mkinitcpio-nfs-utils ancient ipconfig only accepts up to 7 elements
+        ip_dev=${ip_dev%:${ip_dev#*:*:*:*:*:*:*:}}
+        
         if [ -n "$netconf_timeout" ]; then
             ipconfig_cmd="ipconfig -t $netconf_timeout ip=${ip_dev}"
         else
