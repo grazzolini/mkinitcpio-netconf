@@ -61,8 +61,15 @@ configure_device ()
 run_hook ()
 {
 
-
   : > /ip_devices
+
+  # inject with kernel parameter of format nicmac=net0-02:42:08:a3:f9:c9
+  if [ -n "${nicmac}" ]; then
+    requiredName="$( echo "$nicmac" | tr -d'-' -f1)"
+    intefaceMac="$( echo "$nicmac" | tr -d'-' -f2)"
+    currentName="$(ip -br l | grep "${interfaceMac}" | awk '{ print $1 })')"
+    ip link set "$currentName" name "$requierdName"
+  fi
 
   if [ -z "${ip}" -a -n "${nfsaddrs}" ]; then
     ip="${nfsaddrs}"
