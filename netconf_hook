@@ -72,8 +72,8 @@ run_hook ()
   # inject with kernel parameter of format nicmac=net0-02:42:08:a3:f9:c9
   if [ -n "${nicmac}" ]; then
     requiredName="$( echo ${nicmac} | cut -d'-' -f1)"
-    export interfaceMac="$( echo ${nicmac} | cut -d'-' -f2)"
-    currentName="$(ip -br l | grep "${interfaceMac}" | awk '{ print $1 }')"
+    interfaceMac="$( echo ${nicmac} | cut -d'-' -f2)"
+    currentName="$(ip -br l | awk -v "mac=$interfaceMac" '$3 == mac {print $1}')"
     ip link set "$currentName" name "$requiredName"
   fi
 
