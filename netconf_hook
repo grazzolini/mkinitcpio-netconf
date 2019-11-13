@@ -65,10 +65,10 @@ run_hook ()
 
   # There might be cases where the interface names don't match some setup you have.
   # If you want to rename an interface based on MAC, you can use nicmac.
-  # This uses a different kernel parameter so that it leaves existing stuff backwards compatbile.
+  # This uses a different kernel parameter so that it leaves existing stuff backwards compatible.
   # This section might get deleted when grazz decides to refactor this hook.
   #
-  # If this is something you might need,
+  # If this is something you might need, for the nic you use in ${ip} also
   # inject with kernel parameter of format nicmac=net0-02:42:08:a3:f9:c9
   if [ -n "${nicmac}" ]; then
     requiredName="$( echo ${nicmac} | cut -d'-' -f1)"
