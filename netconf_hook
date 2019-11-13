@@ -68,7 +68,7 @@ run_hook ()
     requiredName="$( echo "$nicmac" | tr -d'-' -f1)"
     intefaceMac="$( echo "$nicmac" | tr -d'-' -f2)"
     currentName="$(ip -br l | grep "${interfaceMac}" | awk '{ print $1 })')"
-    ip link set "$currentName" name "$requierdName"
+    ip link set "$currentName" name "$requiredname"
   fi
 
   if [ -z "${ip}" -a -n "${nfsaddrs}" ]; then
